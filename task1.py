@@ -9,20 +9,22 @@ compute the cosine similarity between 2 embeddings (2 vectors) and find the clos
 
 # standard libs
 import time
+import sys
 
 # external libs
-from gensim.models import KeyedVectors
+import gensim.downloader as api
 
-# committing 2 GB file? sheeeeesh no one wants that
-# download it here instead
-# --> https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?resourcekey=0-wjGZdNAUop6WykTtMip30g
-GOOGLE_NEWS_MODEL='./GoogleNews-vectors-negative300.bin.gz'
+GOOGLE_NEWS_MODEL = 'word2vec-google-news-300'
+
+print('Loading: ' + GOOGLE_NEWS_MODEL)
 
 start = time.time()
-model = KeyedVectors.load_word2vec_format(GOOGLE_NEWS_MODEL, binary=True)
+model = api.load(GOOGLE_NEWS_MODEL)
 model_load_time = time.time() - start
 
-print('Took ' + str(model_load_time) + ' seconds to load GoogleNews embedding model from disk')
+print('\nTook ' + str(model_load_time) + ' seconds to load GoogleNews embedding model')
+
+print('\nSimilarity of "woman" and "man" --> ' + str(model.similarity('woman', 'man')))
 
 '''
 The output of this task should be stored in 2 files:
