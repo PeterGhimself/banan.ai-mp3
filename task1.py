@@ -15,11 +15,13 @@ import sys
 import gensim.downloader as api
 
 GOOGLE_NEWS_MODEL = 'word2vec-google-news-300'
+SYNONYMS_CSV_FILE = './synonyms.csv'
 
 print('Loading: ' + GOOGLE_NEWS_MODEL)
 
 start = time.time()
 model = api.load(GOOGLE_NEWS_MODEL)
+word_vectors = model.index_to_key # used later for checking if certain words included or not
 model_load_time = time.time() - start
 
 print('\nTook ' + str(model_load_time) + ' seconds to load GoogleNews embedding model')
@@ -58,3 +60,57 @@ For example, the file analysis.csv could contain:
 word2vec-google-news-300,3000000,44,78,0.5641025641025641
 
 '''
+
+with open(SYNONYMS_CSV_FILE) as f:
+    lines = f.readlines()
+
+for line in lines:
+    print('----------------------')
+    line = line.strip()
+    tings = line.split(',')
+    question_word = tings[0]
+    question_answer = tings[1]
+    options = tings[2:]
+
+    print('question word:', question_word)
+    print('question answer:', question_answer)
+    print('guess options:', options)
+
+    best_guess = label = ''
+    max_similarity = 0
+
+    for guess in options:
+        try:
+            print('comparing "' + question_word + '" with "' + guess + '"')
+            similarity = model.similarity(question_word, guess)
+            print('similarity:', similarity)
+            print('max_similarity:', max_similarity)
+
+            if similarity > max_similarity:
+                print('max update')
+                max_similarity = similarity
+                best_guess = guess
+
+        except KeyError:
+            if question_word not in word_vectors:
+                print('question word "' + question_word + '" not found in model')
+                label = 'guess'
+            else:
+                at_least_one_found = False
+                for guess in options:
+                    if guess not in word_vectors:
+                        print('guess "' + guess + '" not found in model')
+                    else:
+                        at_least_one_found = True
+
+                if not at_least_one_found:
+                    label = 'guess'
+        finally:
+            if not label == 'guess':
+                if best_guess == question_answer:
+                    label = 'correct'
+                else:
+                    label = 'wrong'
+
+    print('best guess:', best_guess)
+    print('label:', label)
