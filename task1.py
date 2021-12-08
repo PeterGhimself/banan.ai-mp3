@@ -15,13 +15,47 @@ import logging
 # external libs
 import gensim.downloader as api
 
+# logging setup
+
+
+def setup_logger(logger_name, log_file, level=logging.INFO):
+
+    log_setup = logging.getLogger(logger_name)
+    formatter = logging.Formatter('%(message)s')
+    fileHandler = logging.FileHandler(log_file, mode='a')
+    fileHandler.setFormatter(formatter)
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+    log_setup.setLevel(level)
+    log_setup.addHandler(fileHandler)
+    log_setup.addHandler(streamHandler)
+
+def logger(msg, logfile):
+ 
+    if logfile == 0:
+        log = logging.getLogger('details')
+    elif logfile == 1:
+        log = logging.getLogger('analysis') 
+    else:
+        print('Invalid logfile option')
+        return
+    
+    log.info(msg) 
+
 GOOGLE_NEWS_MODEL = 'word2vec-google-news-300'
 SYNONYMS_CSV_FILE = './synonyms.csv'
 GOOGLE_NEWS_DETAILS_FILE = GOOGLE_NEWS_MODEL + '-details.txt'
+GOOGLE_NEWS_ANALYSIS_FILE = GOOGLE_NEWS_MODEL + '-analysis.txt'
+TEST_DATA_SIZE = 80
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger()
-logger.addHandler(logging.FileHandler(GOOGLE_NEWS_DETAILS_FILE, 'w'))
+setup_logger('details', GOOGLE_NEWS_DETAILS_FILE, logging.INFO)
+setup_logger('analysis', GOOGLE_NEWS_ANALYSIS_FILE, logging.INFO)
+
+# ensure log files reset per run
+with open(GOOGLE_NEWS_DETAILS_FILE, 'w') as fout:
+    fout.writelines('')
+with open(GOOGLE_NEWS_ANALYSIS_FILE, 'w') as fout:
+    fout.writelines('')
 
 print('Loading: ' + GOOGLE_NEWS_MODEL)
 
@@ -70,7 +104,9 @@ word2vec-google-news-300,3000000,44,78,0.5641025641025641
 with open(SYNONYMS_CSV_FILE) as f:
     lines = f.readlines()
 
+lines = lines[1:] # strip away first header line
 log_line = ''
+correct_ctr = guess_ctr = 0
 
 for line in lines:
     print('----------------------')
@@ -85,8 +121,8 @@ for line in lines:
     print('guess options:', options)
 
     log_line = question_word + ',' +  question_answer + ','
-    best_gcuess = label = ''
-    max_similarity = 0
+    best_guess = label = ''
+    max_similarity = 0 
 
     for guess in options:
         try:
@@ -96,7 +132,6 @@ for line in lines:
             print('max_similarity:', max_similarity)
 
             if similarity > max_similarity:
-                print('max update')
                 max_similarity = similarity
                 best_guess = guess
 
@@ -121,14 +156,30 @@ for line in lines:
                 else:
                     label = 'wrong'
 
+
+    if label == 'guess':
+        guess_ctr += 1
+    elif label == 'correct':
+        correct_ctr += 1
+
     print('best guess:', best_guess)
     print('label:', label)
 
     log_line += best_guess + ',' + label
-    logger.info(log_line)
+    logger(log_line, 0)
 
-# strip away initial garbage
-with open(GOOGLE_NEWS_DETAILS_FILE, 'r') as fin:
-    data = fin.read().splitlines(True)
-with open(GOOGLE_NEWS_DETAILS_FILE, 'w') as fout:
-    fout.writelines(data[3:])
+
+# stats needed for analysis file
+vocab_size = len(word_vectors)
+num_questions_not_guessed = TEST_DATA_SIZE - guess_ctr
+model_accuracy = (correct_ctr/num_questions_not_guessed) * 100
+model_accuracy = round(model_accuracy, 2)
+
+print('guess_ctr', guess_ctr)
+print('correct_ctr', correct_ctr)
+print('num_questions_not_guessed)', num_questions_not_guessed)
+
+log_line = GOOGLE_NEWS_MODEL + ',' + str(vocab_size) + ',' + str(correct_ctr) + ','
+log_line += str(num_questions_not_guessed) + ',' + str(model_accuracy) + '%'
+
+logger(log_line, 1)
