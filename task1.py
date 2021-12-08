@@ -10,12 +10,18 @@ compute the cosine similarity between 2 embeddings (2 vectors) and find the clos
 # standard libs
 import time
 import sys
+import logging
 
 # external libs
 import gensim.downloader as api
 
 GOOGLE_NEWS_MODEL = 'word2vec-google-news-300'
 SYNONYMS_CSV_FILE = './synonyms.csv'
+GOOGLE_NEWS_DETAILS_FILE = GOOGLE_NEWS_MODEL + '-details.txt'
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger()
+logger.addHandler(logging.FileHandler(GOOGLE_NEWS_DETAILS_FILE, 'w'))
 
 print('Loading: ' + GOOGLE_NEWS_MODEL)
 
@@ -64,6 +70,8 @@ word2vec-google-news-300,3000000,44,78,0.5641025641025641
 with open(SYNONYMS_CSV_FILE) as f:
     lines = f.readlines()
 
+log_line = ''
+
 for line in lines:
     print('----------------------')
     line = line.strip()
@@ -76,7 +84,8 @@ for line in lines:
     print('question answer:', question_answer)
     print('guess options:', options)
 
-    best_guess = label = ''
+    log_line = question_word + ',' +  question_answer + ','
+    best_gcuess = label = ''
     max_similarity = 0
 
     for guess in options:
@@ -114,3 +123,12 @@ for line in lines:
 
     print('best guess:', best_guess)
     print('label:', label)
+
+    log_line += best_guess + ',' + label
+    logger.info(log_line)
+
+# strip away initial garbage
+with open(GOOGLE_NEWS_DETAILS_FILE, 'r') as fin:
+    data = fin.read().splitlines(True)
+with open(GOOGLE_NEWS_DETAILS_FILE, 'w') as fout:
+    fout.writelines(data[3:])
