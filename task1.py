@@ -182,12 +182,11 @@ def run_model(model_name):
 
     logger(log_line, 1)
 
-#run_model('word2vec-google-news-300') # OG (variant 0)
+run_model('word2vec-google-news-300') # OG (variant 0)
 
 # different corpus, same embedding sizes
-#run_model('glove-wiki-gigaword-300') # variant 1
-run_model('conceptnet-numberbatch-17-06-300')
-#run_model('fasttext-wiki-news-subwords-300') # takes forever to process? not done loading? what is happening?
+run_model('glove-wiki-gigaword-200') # variant 1
+run_model('glove-twitter-200')
 
 # same corpus, different embedding sizes
 run_model('glove-twitter-25')
