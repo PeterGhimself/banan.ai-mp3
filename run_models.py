@@ -16,42 +16,36 @@ import logging
 import gensim.downloader as api
 
 # globals
+DETAILS = 'details'
+ANALYSIS = 'analysis'
 SYNONYMS_FILE = 'data/synonyms.csv'
-ANALYSIS_FILE = 'output/analysis.csv'
+ANALYSIS_FILE = 'output/' + ANALYSIS + '.csv'
 TEST_DATA_SIZE = 80
 
 
 # logging setup
-def setup_logger(logger_name, log_file, level=logging.INFO):
-    log_setup = logging.getLogger(logger_name)
+def setup_logger(name, path, level=logging.INFO, header=''):
+    log = logging.getLogger(name)
     formatter = logging.Formatter('%(message)s')
-    file = logging.FileHandler(log_file, mode='a')
+    file = logging.FileHandler(path, mode='w')
     file.setFormatter(formatter)
     stream = logging.StreamHandler()
     stream.setFormatter(formatter)
-    log_setup.setLevel(level)
-    log_setup.addHandler(file)
-    log_setup.addHandler(stream)
-    # ensure log files reset per run
-    with open(log_file, 'w') as fout:
-        fout.writelines('')
+    log.setLevel(level)
+    log.addHandler(file)
+    log.addHandler(stream)
+    with open(path, 'w') as fout:
+        fout.writelines(header)
 
 
-def logger(msg, logfile):
-    if logfile == 0:
-        log = logging.getLogger('details')
-    elif logfile == 1:
-        log = logging.getLogger('analysis')
-    else:
-        print('Invalid logfile option')
-        return
-
+def logger(msg, name=DETAILS):
+    log = logging.getLogger(name)
     log.info(msg)
 
 
 def run_model(model_name):
     # ensure log files reset per run
-    setup_logger('details', 'output/' + model_name + '-details.csv', logging.INFO)
+    setup_logger(DETAILS, f"output/{model_name}-{DETAILS}.csv", header='question,answer,guess,label')
 
     print('Loading: ' + model_name)
 
@@ -162,7 +156,7 @@ def run_model(model_name):
         print('label:', label)
 
         log_line += best_guess + ',' + label
-        logger(log_line, 0)
+        logger(log_line, DETAILS)
 
     # stats needed for analysis file
     vocab_size = len(word_vectors)
@@ -177,12 +171,12 @@ def run_model(model_name):
     log_line = model_corpus + '-' + str(model_dimension) + ',' + model_name + ',' + str(vocab_size) + ',' 
     log_line += str(correct_ctr) + ',' + str(num_questions_not_guessed) + ',' + str(model_accuracy) + '%'
 
-    logger(log_line, 1)
+    logger(log_line, ANALYSIS)
 
 
 def main():
     # setup shared analysis csv
-    setup_logger('analysis', ANALYSIS_FILE, logging.INFO)
+    setup_logger(ANALYSIS, ANALYSIS_FILE, header='corpus-emsize,filename,vocabulary,correct,questions,accuracy')
 
     run_model('word2vec-google-news-300')  # OG (variant 0)
 
