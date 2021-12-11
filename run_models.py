@@ -62,6 +62,9 @@ def run_model(model_name):
     start = time.time()
     model = api.load(model_name)
     word_vectors = model.index_to_key  # used later for checking if certain words included or not
+    model_dimension = model.vector_size
+    model_corpus_arr = model_name.split('-')[1:-1]
+    model_corpus = ' '.join(model_corpus_arr)
     model_load_time = time.time() - start
 
     print('\nTook ' + str(model_load_time) + ' seconds to load ' + model_name + 'embedding model')
@@ -175,8 +178,8 @@ def run_model(model_name):
     print('correct_ctr', correct_ctr)
     print('num_questions_not_guessed)', num_questions_not_guessed)
 
-    log_line = model_name + ',' + str(vocab_size) + ',' + str(correct_ctr) + ','
-    log_line += str(num_questions_not_guessed) + ',' + str(model_accuracy) + '%'
+    log_line = model_corpus + '-' + str(model_dimension) + ',' + model_name + ',' + str(vocab_size) + ',' 
+    log_line += str(correct_ctr) + ',' + str(num_questions_not_guessed) + ',' + str(model_accuracy) + '%'
 
     logger(log_line, 1)
 
