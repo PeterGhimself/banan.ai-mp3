@@ -15,19 +15,26 @@ import logging
 # external libs
 import gensim.downloader as api
 
+# globals
+SYNONYMS_FILE = 'data/synonyms.csv'
+ANALYSIS_FILE = 'output/analysis.csv'
+TEST_DATA_SIZE = 80
+
 
 # logging setup
-
 def setup_logger(logger_name, log_file, level=logging.INFO):
     log_setup = logging.getLogger(logger_name)
     formatter = logging.Formatter('%(message)s')
-    fileHandler = logging.FileHandler(log_file, mode='a')
-    fileHandler.setFormatter(formatter)
-    streamHandler = logging.StreamHandler()
-    streamHandler.setFormatter(formatter)
+    file = logging.FileHandler(log_file, mode='a')
+    file.setFormatter(formatter)
+    stream = logging.StreamHandler()
+    stream.setFormatter(formatter)
     log_setup.setLevel(level)
-    log_setup.addHandler(fileHandler)
-    log_setup.addHandler(streamHandler)
+    log_setup.addHandler(file)
+    log_setup.addHandler(stream)
+    # ensure log files reset per run
+    with open(log_file, 'w') as fout:
+        fout.writelines('')
 
 
 def logger(msg, logfile):
@@ -43,19 +50,8 @@ def logger(msg, logfile):
 
 
 def run_model(model_name):
-    SYNONYMS_CSV_FILE = 'data/synonyms.csv'
-    DETAILS_FILE = 'output/' + model_name + '-details.csv'
-    ANALYSIS_FILE = 'output/' + model_name + '-analysis.csv'
-    TEST_DATA_SIZE = 80
-
-    setup_logger('details', DETAILS_FILE, logging.INFO)
-    setup_logger('analysis', ANALYSIS_FILE, logging.INFO)
-
     # ensure log files reset per run
-    with open(DETAILS_FILE, 'w') as fout:
-        fout.writelines('')
-    with open(ANALYSIS_FILE, 'w') as fout:
-        fout.writelines('')
+    setup_logger('details', 'output/' + model_name + '-details.csv', logging.INFO)
 
     print('Loading: ' + model_name)
 
@@ -99,7 +95,7 @@ def run_model(model_name):
 
     '''
 
-    with open(SYNONYMS_CSV_FILE) as f:
+    with open(SYNONYMS_FILE) as f:
         lines = f.readlines()
 
     lines = lines[1:]  # strip away first header line
@@ -180,13 +176,21 @@ def run_model(model_name):
 
     logger(log_line, 1)
 
-run_model('word2vec-google-news-300') # OG (variant 0)
 
-# different corpus, same embedding sizes
-run_model('glove-wiki-gigaword-200') # variant 1
-run_model('glove-twitter-200')
+def main():
+    # setup shared analysis csv
+    setup_logger('analysis', ANALYSIS_FILE, logging.INFO)
 
-# same corpus, different embedding sizes
-run_model('glove-twitter-25')
-run_model('glove-twitter-200')
+    run_model('word2vec-google-news-300')  # OG (variant 0)
 
+    # different corpus, same embedding sizes
+    run_model('glove-wiki-gigaword-200')  # variant 1
+    run_model('glove-twitter-200')
+
+    # same corpus, different embedding sizes
+    run_model('glove-twitter-25')
+    run_model('glove-twitter-200')
+
+
+if __name__ == '__main__':
+    main()
