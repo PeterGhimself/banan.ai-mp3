@@ -161,15 +161,14 @@ def run_model(model_name):
     # stats needed for analysis file
     vocab_size = len(word_vectors)
     num_questions_not_guessed = TEST_DATA_SIZE - guess_ctr
-    model_accuracy = (correct_ctr / num_questions_not_guessed) * 100
-    model_accuracy = round(model_accuracy, 2)
+    model_accuracy = (correct_ctr / num_questions_not_guessed)
 
     print('guess_ctr', guess_ctr)
     print('correct_ctr', correct_ctr)
     print('num_questions_not_guessed)', num_questions_not_guessed)
 
-    log_line = model_corpus + '-' + str(model_dimension) + ',' + model_name + ',' + str(vocab_size) + ',' 
-    log_line += str(correct_ctr) + ',' + str(num_questions_not_guessed) + ',' + str(model_accuracy) + '%'
+    log_line = model_corpus + '-' + str(model_dimension) + ',' + model_name + ',' + str(vocab_size) + ','
+    log_line += str(correct_ctr) + ',' + str(num_questions_not_guessed) + ',' + str(model_accuracy)
 
     logger(log_line, ANALYSIS)
 
