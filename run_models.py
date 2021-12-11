@@ -57,7 +57,7 @@ def run_model(model_name):
     model_corpus = ' '.join(model_corpus_arr)
     model_load_time = time.time() - start
 
-    print('\nTook ' + str(model_load_time) + ' seconds to load ' + model_name + 'embedding model')
+    print('\nTook ' + str(model_load_time) + ' seconds to load ' + model_name + ' model')
 
     '''
     The output of this task should be stored in 2 files:
