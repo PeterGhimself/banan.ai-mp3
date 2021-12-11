@@ -15,10 +15,10 @@ import logging
 # external libs
 import gensim.downloader as api
 
+
 # logging setup
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
-
     log_setup = logging.getLogger(logger_name)
     formatter = logging.Formatter('%(message)s')
     fileHandler = logging.FileHandler(log_file, mode='a')
@@ -29,23 +29,23 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     log_setup.addHandler(fileHandler)
     log_setup.addHandler(streamHandler)
 
+
 def logger(msg, logfile):
- 
     if logfile == 0:
         log = logging.getLogger('details')
     elif logfile == 1:
-        log = logging.getLogger('analysis') 
+        log = logging.getLogger('analysis')
     else:
         print('Invalid logfile option')
         return
-    
-    log.info(msg) 
+
+    log.info(msg)
 
 
 def run_model(model_name):
-    SYNONYMS_CSV_FILE = './synonyms.csv'
-    DETAILS_FILE = model_name + '-details.txt'
-    ANALYSIS_FILE = model_name + '-analysis.txt'
+    SYNONYMS_CSV_FILE = 'data/synonyms.csv'
+    DETAILS_FILE = 'output/' + model_name + '-details.csv'
+    ANALYSIS_FILE = 'output/' + model_name + '-analysis.csv'
     TEST_DATA_SIZE = 80
 
     setup_logger('details', DETAILS_FILE, logging.INFO)
@@ -61,7 +61,7 @@ def run_model(model_name):
 
     start = time.time()
     model = api.load(model_name)
-    word_vectors = model.index_to_key # used later for checking if certain words included or not
+    word_vectors = model.index_to_key  # used later for checking if certain words included or not
     model_load_time = time.time() - start
 
     print('\nTook ' + str(model_load_time) + ' seconds to load ' + model_name + 'embedding model')
@@ -102,7 +102,7 @@ def run_model(model_name):
     with open(SYNONYMS_CSV_FILE) as f:
         lines = f.readlines()
 
-    lines = lines[1:] # strip away first header line
+    lines = lines[1:]  # strip away first header line
     log_line = ''
     correct_ctr = guess_ctr = 0
 
@@ -118,9 +118,9 @@ def run_model(model_name):
         print('question answer:', question_answer)
         print('guess options:', options)
 
-        log_line = question_word + ',' +  question_answer + ','
+        log_line = question_word + ',' + question_answer + ','
         best_guess = label = ''
-        max_similarity = 0 
+        max_similarity = 0
 
         for guess in options:
             try:
@@ -154,7 +154,6 @@ def run_model(model_name):
                     else:
                         label = 'wrong'
 
-
         if label == 'guess':
             guess_ctr += 1
         elif label == 'correct':
@@ -166,11 +165,10 @@ def run_model(model_name):
         log_line += best_guess + ',' + label
         logger(log_line, 0)
 
-
     # stats needed for analysis file
     vocab_size = len(word_vectors)
     num_questions_not_guessed = TEST_DATA_SIZE - guess_ctr
-    model_accuracy = (correct_ctr/num_questions_not_guessed) * 100
+    model_accuracy = (correct_ctr / num_questions_not_guessed) * 100
     model_accuracy = round(model_accuracy, 2)
 
     print('guess_ctr', guess_ctr)
