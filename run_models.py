@@ -34,8 +34,7 @@ def setup_logger(name, path, level=logging.INFO, header=''):
     log.setLevel(level)
     log.addHandler(file)
     log.addHandler(stream)
-    with open(path, 'w') as fout:
-        fout.writelines(header)
+    log.info(header)
 
 
 def logger(msg, name=DETAILS):
