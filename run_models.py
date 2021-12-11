@@ -189,7 +189,7 @@ def main():
 
     # same corpus, different embedding sizes
     run_model('glove-twitter-25')
-    run_model('glove-twitter-200')
+    run_model('glove-twitter-100')
 
 
 if __name__ == '__main__':
