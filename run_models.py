@@ -159,18 +159,18 @@ def run_model(model_name):
         elif label == 'correct':
             correct_ctr += 1
 
-        if len(line_similarity) == 0:
-            line_similarity.append(-1)
-
-        model_similarity_stats.append(line_similarity)
-        min_similarity = min(line_similarity)
-        avg_similarity = np.average(line_similarity)
-        std_similarity = np.std(line_similarity)
-
         print('best guess:', best_guess)
         print('label:', label)
-        print(f"avg similarity: {avg_similarity} (std: {std_similarity})")
-        print(f"max similarity: {max_similarity} / min: {min_similarity}")
+        if RUN_SIMILARITY:
+            if len(line_similarity) == 0:
+                line_similarity.append(-100)
+
+            model_similarity_stats.append(line_similarity)
+            min_similarity = min(line_similarity)
+            avg_similarity = np.average(line_similarity)
+            std_similarity = np.std(line_similarity)
+            print(f"avg similarity: {avg_similarity} (std: {std_similarity})")
+            print(f"max similarity: {max_similarity} / min: {min_similarity}")
 
         log_line += f"{best_guess},{label}"
         if RUN_SIMILARITY:
@@ -188,7 +188,7 @@ def run_model(model_name):
 
     if RUN_SIMILARITY:
         #model_total_similarity = [x for x in sum(model_similarity_stats, []) if x >= 0]
-        model_guess_similarity = [x for x in [max(sub) for sub in model_similarity_stats] if x >= 0]
+        model_guess_similarity = [x for x in [max(sub) for sub in model_similarity_stats] if x > -100]
         min_guess_similarity = min(model_guess_similarity)
         max_guess_similarity = max(model_guess_similarity)
         avg_guess_similarity = np.average(model_guess_similarity)
