@@ -9,8 +9,8 @@ compute the cosine similarity between 2 embeddings (2 vectors) and find the clos
 
 # standard libs
 import time
-import sys
 import logging
+import numpy as np
 
 # external libs
 import gensim.downloader as api
@@ -18,6 +18,7 @@ import gensim.downloader as api
 # globals
 DETAILS = 'details'
 ANALYSIS = 'analysis'
+SIMILARITY = 'similarity'
 SYNONYMS_FILE = 'data/synonyms.csv'
 ANALYSIS_FILE = 'output/' + ANALYSIS + '.csv'
 TEST_DATA_SIZE = 80
@@ -44,7 +45,10 @@ def logger(msg, name=DETAILS):
 
 def run_model(model_name):
     # ensure log files reset per run
-    setup_logger(DETAILS, f"output/{model_name}-{DETAILS}.csv", header='question,answer,guess,label')
+    setup_logger(DETAILS,
+                 f"output/{model_name}-{DETAILS}.csv",
+                 header='question,answer,guess,label,max_similarity,min_similarity,avg_similarity,std_similarity'
+                 )
 
     print('Loading: ' + model_name)
 
@@ -55,6 +59,7 @@ def run_model(model_name):
     model_corpus_arr = model_name.split('-')[1:-1]
     model_corpus = ' '.join(model_corpus_arr)
     model_load_time = time.time() - start
+    model_similarity_stats = []
 
     print('\nTook ' + str(model_load_time) + ' seconds to load ' + model_name + ' model')
 
@@ -113,13 +118,15 @@ def run_model(model_name):
         log_line = question_word + ',' + question_answer + ','
         best_guess = label = ''
         max_similarity = 0
+        line_similarity = []
 
         for guess in options:
             try:
                 print('comparing "' + question_word + '" with "' + guess + '"')
                 similarity = model.similarity(question_word, guess)
+                line_similarity.append(similarity)
                 print('similarity:', similarity)
-                print('max_similarity:', max_similarity)
+                print('current max_similarity:', max_similarity)
 
                 if similarity > max_similarity:
                     max_similarity = similarity
@@ -151,30 +158,56 @@ def run_model(model_name):
         elif label == 'correct':
             correct_ctr += 1
 
+        if len(line_similarity) == 0:
+            line_similarity.append(-1)
+
+        model_similarity_stats.append(line_similarity)
+        min_similarity = min(line_similarity)
+        avg_similarity = np.average(line_similarity)
+        std_similarity = np.std(line_similarity)
+
         print('best guess:', best_guess)
         print('label:', label)
+        print(f"avg similarity: {avg_similarity} (std: {std_similarity})")
+        print(f"max similarity: {max_similarity} / min: {min_similarity}")
 
-        log_line += best_guess + ',' + label
+        log_line += f"{best_guess},{label}"
+        log_line += f",{max_similarity},{min_similarity},{avg_similarity},{std_similarity}"
         logger(log_line, DETAILS)
 
     # stats needed for analysis file
     vocab_size = len(word_vectors)
     num_questions_not_guessed = TEST_DATA_SIZE - guess_ctr
     model_accuracy = (correct_ctr / num_questions_not_guessed)
+    model_guess_similarity = [x for x in [max(sub) for sub in model_similarity_stats] if x >= 0]
 
     print('guess_ctr', guess_ctr)
     print('correct_ctr', correct_ctr)
-    print('num_questions_not_guessed)', num_questions_not_guessed)
+    print('num_questions_not_guessed', num_questions_not_guessed)
+
+    min_guess_similarity = min(model_guess_similarity)
+    max_guess_similarity = max(model_guess_similarity)
+    avg_guess_similarity = np.average(model_guess_similarity)
+    std_guess_similarity = np.std(model_guess_similarity)
+    print(f"avg guess similarity: {avg_guess_similarity} (std: {std_guess_similarity})")
+    print(f"max guess similarity: {max_guess_similarity} / min: {min_guess_similarity}")
 
     log_line = model_corpus + '-' + str(model_dimension) + ',' + model_name + ',' + str(vocab_size) + ','
     log_line += str(correct_ctr) + ',' + str(num_questions_not_guessed) + ',' + str(model_accuracy)
+    log_line += f",{max_guess_similarity},{min_guess_similarity},{avg_guess_similarity},{std_guess_similarity}"
 
     logger(log_line, ANALYSIS)
+    logger(f"{model_name}," + ','.join(str(x) for x in model_guess_similarity), SIMILARITY)
 
 
 def main():
     # setup shared analysis csv
-    setup_logger(ANALYSIS, ANALYSIS_FILE, header='corpus-emsize,filename,vocabulary,correct,questions,accuracy')
+    setup_logger(ANALYSIS,
+                 ANALYSIS_FILE,
+                 header='corpus-emsize,filename,vocabulary,correct,questions,accuracy,max_guess_similarity,'
+                        'min_guess_similarity,avg_guess_similarity,std_guess_similarity'
+                 )
+    setup_logger(SIMILARITY, f"output/{SIMILARITY}.csv")
 
     run_model('word2vec-google-news-300')  # OG (variant 0)
 
