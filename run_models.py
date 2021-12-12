@@ -45,7 +45,7 @@ def logger(msg, name=DETAILS):
 
 def run_model(model_name):
     # ensure log files reset per run
-    setup_logger(DETAILS,
+    setup_logger(f"{DETAILS}-{model_name}",
                  f"output/{model_name}-{DETAILS}.csv",
                  header='question,answer,guess,label,max_similarity,min_similarity,avg_similarity,std_similarity'
                  )
@@ -172,8 +172,7 @@ def run_model(model_name):
         print(f"max similarity: {max_similarity} / min: {min_similarity}")
 
         log_line += f"{best_guess},{label}"
-        log_line += f",{max_similarity},{min_similarity},{avg_similarity},{std_similarity}"
-        logger(log_line, DETAILS)
+        logger(log_line, f"{DETAILS}-{model_name}")
 
     # stats needed for analysis file
     vocab_size = len(word_vectors)
