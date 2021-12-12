@@ -22,6 +22,7 @@ SIMILARITY = 'similarity'
 SYNONYMS_FILE = 'data/synonyms.csv'
 ANALYSIS_FILE = 'output/' + ANALYSIS + '.csv'
 TEST_DATA_SIZE = 80
+RUN_SIMILARITY = False
 
 
 # logging setup
@@ -45,10 +46,10 @@ def logger(msg, name=DETAILS):
 
 def run_model(model_name):
     # ensure log files reset per run
-    setup_logger(f"{DETAILS}-{model_name}",
-                 f"output/{model_name}-{DETAILS}.csv",
-                 header='question,answer,guess,label,max_similarity,min_similarity,avg_similarity,std_similarity'
-                 )
+    header = 'question,answer,guess,label'
+    if RUN_SIMILARITY:
+        header += 'max_similarity,min_similarity,avg_similarity,std_similarity'
+    setup_logger(f"{DETAILS}-{model_name}", f"output/{model_name}-{DETAILS}.csv", header=header)
 
     print('Loading: ' + model_name)
 
@@ -172,41 +173,48 @@ def run_model(model_name):
         print(f"max similarity: {max_similarity} / min: {min_similarity}")
 
         log_line += f"{best_guess},{label}"
+        if RUN_SIMILARITY:
+            log_line += f",{max_similarity},{min_similarity},{avg_similarity},{std_similarity}"
         logger(log_line, f"{DETAILS}-{model_name}")
 
     # stats needed for analysis file
     vocab_size = len(word_vectors)
     num_questions_not_guessed = TEST_DATA_SIZE - guess_ctr
     model_accuracy = (correct_ctr / num_questions_not_guessed)
-    model_guess_similarity = [x for x in [max(sub) for sub in model_similarity_stats] if x >= 0]
 
     print('guess_ctr', guess_ctr)
     print('correct_ctr', correct_ctr)
     print('num_questions_not_guessed', num_questions_not_guessed)
 
-    min_guess_similarity = min(model_guess_similarity)
-    max_guess_similarity = max(model_guess_similarity)
-    avg_guess_similarity = np.average(model_guess_similarity)
-    std_guess_similarity = np.std(model_guess_similarity)
-    print(f"avg guess similarity: {avg_guess_similarity} (std: {std_guess_similarity})")
-    print(f"max guess similarity: {max_guess_similarity} / min: {min_guess_similarity}")
+    if RUN_SIMILARITY:
+        #model_total_similarity = [x for x in sum(model_similarity_stats, []) if x >= 0]
+        model_guess_similarity = [x for x in [max(sub) for sub in model_similarity_stats] if x >= 0]
+        min_guess_similarity = min(model_guess_similarity)
+        max_guess_similarity = max(model_guess_similarity)
+        avg_guess_similarity = np.average(model_guess_similarity)
+        std_guess_similarity = np.std(model_guess_similarity)
+        print(f"avg guess similarity: {avg_guess_similarity} (std: {std_guess_similarity})")
+        print(f"max guess similarity: {max_guess_similarity} / min: {min_guess_similarity}")
 
     log_line = model_corpus + '-' + str(model_dimension) + ',' + model_name + ',' + str(vocab_size) + ','
     log_line += str(correct_ctr) + ',' + str(num_questions_not_guessed) + ',' + str(model_accuracy)
-    log_line += f",{max_guess_similarity},{min_guess_similarity},{avg_guess_similarity},{std_guess_similarity}"
+    if RUN_SIMILARITY:
+        log_line += f",{max_guess_similarity},{min_guess_similarity},{avg_guess_similarity},{std_guess_similarity}"
 
     logger(log_line, ANALYSIS)
-    logger(f"{model_name}," + ','.join(str(x) for x in model_guess_similarity), SIMILARITY)
+    if RUN_SIMILARITY:
+        logger(f"{model_name}," + ','.join(str(x) for x in model_guess_similarity), SIMILARITY)
 
 
 def main():
     # setup shared analysis csv
-    setup_logger(ANALYSIS,
-                 ANALYSIS_FILE,
-                 header='corpus-emsize,filename,vocabulary,correct,questions,accuracy,max_guess_similarity,'
-                        'min_guess_similarity,avg_guess_similarity,std_guess_similarity'
-                 )
-    setup_logger(SIMILARITY, f"output/{SIMILARITY}.csv")
+    header = 'corpus-emsize,filename,vocabulary,correct,questions,accuracy'
+    if RUN_SIMILARITY:
+        header += ',max_guess_similarity,min_guess_similarity,avg_guess_similarity,std_guess_similarity'
+    setup_logger(ANALYSIS, ANALYSIS_FILE, header=header)
+
+    if RUN_SIMILARITY:
+        setup_logger(SIMILARITY, f"output/{SIMILARITY}.csv")
 
     run_model('word2vec-google-news-300')  # OG (variant 0)
 
