@@ -19,9 +19,9 @@ import gensim.downloader as api
 DETAILS = 'details'
 ANALYSIS = 'analysis'
 SIMILARITY = 'similarity'
-SYNONYMS_FILE = 'data/synonyms.csv'
+SYNONYMS_FILE = 'data/sample_23.csv'
 ANALYSIS_FILE = 'output/' + ANALYSIS + '.csv'
-TEST_DATA_SIZE = 80
+TEST_DATA_SIZE = 20
 RUN_SIMILARITY = False
 
 
